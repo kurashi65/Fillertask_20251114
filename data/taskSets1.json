@@ -1,0 +1,13 @@
+[
+  {
+    "id": "task-demo",
+    "name": "デモタスク (120秒)",
+    "sentenceSetId": "set-basic",
+    "questionCount": 12,
+    "randomize": true,
+    "enableTimeLimit": true,
+    "durationSec": 120,
+    "showTimer": true,
+    "notes": "ウォームアップ用のサンプル設定"
+  }
+]

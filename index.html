@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>日本語 真偽判定タスク管理</title>
+    <link rel="stylesheet" href="assets/css/style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>日本語 真偽判定タスク管理</h1>
+      <small>文データセットとタスクセットをブラウザ内で整理できます</small>
+    </header>
+
+    <div class="tabs">
+      <button class="tab-button active" data-tab="run-tab">🧪 参加者タスク</button>
+      <button class="tab-button" data-tab="taskset-tab">🗂️ タスクセット</button>
+      <button class="tab-button" data-tab="dataset-tab">📚 文データセット</button>
+      <button class="tab-button" data-tab="prefs-tab">⚙️ 操作設定</button>
+    </div>
+
+    <main>
+      <section id="run-tab" class="card">
+        <h2 class="section-title">参加者用タスク実行</h2>
+        <div id="participant-setup">
+          <p>
+            ここでは，事前に用意した <strong>タスクセット</strong> を選び，
+            参加者に提示する文と制限時間をまとめて実行できます。
+          </p>
+          <div class="grid-2">
+            <div>
+              <label for="participant-task-select">タスクセット</label>
+              <select id="participant-task-select"></select>
+            </div>
+            <div class="inline-actions">
+              <button id="open-taskset-tab" class="btn btn-text" type="button">
+                タスクセットを編集する
+              </button>
+            </div>
+          </div>
+          <div id="participant-task-summary" class="summary-box small-muted">
+            タスクセットがまだ存在しません。「タスクセット」タブで作成してください。
+          </div>
+          <div class="keys-row">
+            <div class="key-pill" id="true-key-pill">本当だと思う：F キー</div>
+            <div class="key-pill" id="false-key-pill">うそだと思う：J キー</div>
+          </div>
+          <p class="subtext">
+            キーボードが使いづらい場合は，画面下部のボタンでも回答できます。
+          </p>
+          <div class="center" style="text-align: center; margin-top: 1rem;">
+            <button id="participant-start" class="btn btn-primary">タスクを開始</button>
+          </div>
+        </div>
+
+        <div id="participant-running" class="hidden">
+          <div id="timer-panel" class="timer-panel hidden">
+            <span id="timer-label">残り時間</span>
+            <span id="timer-value">00:00</span>
+          </div>
+          <div class="sentence-display" id="sentence-text"></div>
+          <div class="keys-row">
+            <button id="btn-true" class="btn btn-outline">本当だと思う</button>
+            <button id="btn-false" class="btn btn-outline">うそだと思う</button>
+          </div>
+          <p class="subtext">
+            キーボード：<span id="task-true-key-label">F = 本当</span> ／
+            <span id="task-false-key-label">J = うそ</span>
+          </p>
+          <div class="status-row">
+            <span>
+              <span id="status-dot" class="status-dot"></span>
+              状態：<span id="status-label">待機中</span>
+            </span>
+            <span>回答数：<span id="status-count">0 / 0</span></span>
+          </div>
+        </div>
+
+        <div id="participant-finished" class="hidden">
+          <h3 class="section-title">終了しました</h3>
+          <p>
+            真偽判定タスクが完了しました。以下の JSON ログをコピーして保存してください。
+          </p>
+          <label for="result-json">JSON ログ</label>
+          <textarea id="result-json" readonly spellcheck="false"></textarea>
+          <div class="center" style="text-align: center; margin-top: 1rem;">
+            <button id="participant-reset" class="btn btn-outline">準備画面に戻る</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="taskset-tab" class="card hidden">
+        <h2 class="section-title">タスクセット管理</h2>
+        <p class="small-muted">
+          タスクセットには「参照する文データセット」「出題数」「制限時間」などの設定をまとめて登録します。
+          参加者タスクではここに登録されたセットを選択して実行します。
+        </p>
+        <div class="grid-2">
+          <div>
+            <label for="taskset-selector">タスクセット一覧</label>
+            <select id="taskset-selector"></select>
+          </div>
+          <div class="inline-actions">
+            <button class="btn btn-outline" id="taskset-new" type="button">新規作成</button>
+            <button class="btn btn-outline" id="taskset-duplicate" type="button">複製</button>
+            <button class="btn btn-outline" id="taskset-delete" type="button">削除</button>
+          </div>
+        </div>
+
+      <div class="flex-row mt-3">
+        <div class="flex-1">
+            <label for="taskset-name">タスクセット名</label>
+            <input type="text" id="taskset-name" placeholder="例：120秒ウォームアップ" />
+
+            <label for="taskset-sentence-set" class="mt-2">参照する文データセット</label>
+            <select id="taskset-sentence-set"></select>
+            <p class="small-muted" id="taskset-dataset-info"></p>
+
+            <label for="taskset-question-count" class="mt-2">問題数（空欄なら全文）</label>
+            <input type="number" id="taskset-question-count" min="1" placeholder="例：20" />
+
+            <label class="mt-2">提示順</label>
+            <div>
+              <label style="font-weight: 400;">
+                <input type="checkbox" id="taskset-randomize" checked />
+                出題ごとにランダムに並び替える（推奨）
+              </label>
+            </div>
+          </div>
+          <div class="flex-1">
+            <label class="mt-2">制限時間</label>
+            <div>
+              <label style="font-weight: 400; display: flex; align-items: center; gap: 0.4rem;">
+                <input type="checkbox" id="taskset-enable-timer" checked />
+                制限時間を設定する
+              </label>
+            </div>
+            <label for="taskset-duration" class="mt-1">制限時間（秒）</label>
+            <input type="number" id="taskset-duration" min="10" step="10" value="120" />
+
+            <label style="font-weight: 400; display: flex; align-items: center; gap: 0.4rem; margin-top: 0.8rem;">
+              <input type="checkbox" id="taskset-show-timer" checked />
+              制限時間を画面に表示する
+            </label>
+
+            <label for="taskset-notes" class="mt-2">メモ（参加者には表示されません）</label>
+            <textarea id="taskset-notes" placeholder="目的や注意事項などのメモ"></textarea>
+          </div>
+        </div>
+
+      <div class="mt-3" style="text-align: right;">
+        <button class="btn btn-primary" id="taskset-save" type="button">設定を保存</button>
+      </div>
+
+      <div class="mt-4 summary-box">
+        <h3 class="section-title" style="margin-top: 0;">タスクセット JSON 操作</h3>
+        <p class="small-muted">
+          ここではタスクセット全体を JSON でエクスポート／インポートできます。<br />
+          編集後に <code>data/taskSets.json</code> を更新したい場合は、ダウンロードした JSON で手動で置き換えてください。
+        </p>
+        <textarea id="taskset-json" spellcheck="false" class="mb-2"></textarea>
+        <div class="inline-actions" style="justify-content: flex-end;">
+          <button class="btn btn-outline" id="taskset-json-apply" type="button">JSON を反映</button>
+          <button class="btn btn-outline" id="taskset-json-download" type="button">JSON をダウンロード</button>
+          <button class="btn btn-outline" id="taskset-reload" type="button">ファイルから再読み込み</button>
+        </div>
+      </div>
+    </section>
+
+      <section id="dataset-tab" class="card hidden">
+        <h2 class="section-title">文データセット管理</h2>
+        <p class="small-muted">
+          文データセットごとに文をまとめて保存できます。初期値は <code>data/sentenceSets.json</code> に置いてあり，
+          編集結果はブラウザに保存されます。必要なら JSON をダウンロードしてファイルを更新してください。
+        </p>
+        <div class="inline-actions" style="justify-content: flex-end;">
+          <button class="btn btn-outline" id="dataset-reload" type="button">
+            JSON ファイルから再読み込み
+          </button>
+        </div>
+        <div class="grid-2">
+          <div>
+            <label for="dataset-selector">文データセット</label>
+            <select id="dataset-selector"></select>
+          </div>
+          <div class="inline-actions">
+            <button class="btn btn-outline" id="dataset-new" type="button">新規作成</button>
+            <button class="btn btn-outline" id="dataset-duplicate" type="button">複製</button>
+            <button class="btn btn-outline" id="dataset-delete" type="button">削除</button>
+          </div>
+        </div>
+
+        <div class="flex-row mt-3">
+          <div class="flex-1">
+            <label for="dataset-name">セット名</label>
+            <input type="text" id="dataset-name" placeholder="例：日常文セット" />
+
+            <label for="dataset-description" class="mt-2">説明</label>
+            <textarea id="dataset-description" placeholder="利用目的や特徴など"></textarea>
+
+            <p class="small-muted" id="dataset-meta-info"></p>
+
+            <div class="mt-2" style="text-align: right;">
+              <button class="btn btn-primary" id="dataset-save" type="button">セット情報を保存</button>
+            </div>
+          </div>
+          <div class="flex-1">
+            <label for="dataset-json">JSON（このセットの sentences）</label>
+            <textarea id="dataset-json" spellcheck="false" class="mb-2"></textarea>
+            <div class="inline-actions" style="justify-content: flex-end;">
+              <button class="btn btn-outline" id="dataset-json-apply" type="button">JSON から文を上書き</button>
+              <button class="btn btn-outline" id="dataset-json-download" type="button">JSON をダウンロード</button>
+            </div>
+            <p class="small-muted mt-1">
+              編集内容はブラウザの localStorage にのみ保存されます。必要に応じて JSON をコピーするか，ダウンロードして <code>data/sentenceSets.json</code> を更新してください。
+            </p>
+          </div>
+        </div>
+
+        <hr style="margin: 2rem 0; border: none; border-top: 1px solid #e5e7eb;" />
+
+        <div class="flex-row">
+          <div class="flex-1">
+            <label for="new-sentence-text">文</label>
+            <textarea id="new-sentence-text" placeholder="例：犬は四本足で歩く。"></textarea>
+
+            <label for="new-sentence-truth" class="mt-2">真偽</label>
+            <select id="new-sentence-truth">
+              <option value="true">真（本当）</option>
+              <option value="false">偽（うそ）</option>
+            </select>
+
+            <label for="new-sentence-tags" class="mt-2">タグ（カンマ区切り，任意）</label>
+            <input type="text" id="new-sentence-tags" placeholder="例：動物,日常" />
+
+            <div class="mt-2 inline-actions" style="justify-content: flex-start;">
+              <button class="btn btn-primary" id="add-sentence" type="button">文を追加</button>
+              <button class="btn btn-outline hidden" id="update-sentence" type="button">文を更新</button>
+              <button class="btn btn-text hidden" id="cancel-edit-sentence" type="button">編集をキャンセル</button>
+            </div>
+            <p class="small-muted" id="sentence-edit-hint"></p>
+          </div>
+          <div class="flex-1">
+            <h3 class="section-title" style="margin-top: 0;">文一覧</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th style="width: 2rem;">#</th>
+                  <th>文</th>
+                  <th style="width: 4rem;">真偽</th>
+                  <th style="width: 6rem;">タグ</th>
+                  <th style="width: 3.5rem;"></th>
+                </tr>
+              </thead>
+              <tbody id="sentence-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="prefs-tab" class="card hidden">
+        <h2 class="section-title">操作設定</h2>
+        <p class="small-muted">
+          参加者が使うキー配置や，デバッグログの表示方法を設定します。設定はブラウザに保存され，すべてのタスクセットで共有されます。
+        </p>
+        <div class="flex-row">
+          <div class="flex-1">
+            <label for="pref-true-key">「本当」キー</label>
+            <input type="text" id="pref-true-key" maxlength="1" placeholder="例：f" />
+
+            <label for="pref-false-key" class="mt-2">「うそ」キー</label>
+            <input type="text" id="pref-false-key" maxlength="1" placeholder="例：j" />
+          </div>
+          <div class="flex-1">
+            <label class="mt-2">デバッグログ</label>
+            <div>
+              <label style="font-weight: 400;">
+                <input type="checkbox" id="pref-debug" />
+                ブラウザのコンソールに詳細ログを出力する
+              </label>
+            </div>
+            <p class="small-muted mt-1">
+              実験者が挙動を確認したいときのみ有効にしてください。
+            </p>
+          </div>
+        </div>
+        <div class="mt-3" style="text-align: right;">
+          <button class="btn btn-primary" id="pref-save" type="button">設定を保存</button>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="assets/js/main.js"></script>
+  </body>
+</html>
