@@ -23,11 +23,15 @@ export function createTaskRunner(dom, { logDebug = () => {} } = {}) {
     state.index = -1;
     state.responses = [];
     state.running = true;
-    state.taskSet = taskSet;
+    state.taskSet = {
+      ...taskSet,
+      showTimer: taskSet.showTimer !== false,
+      showQuestionCount: taskSet.showQuestionCount === true,
+    };
     state.sentenceSet = sentenceSet;
     state.preferences = preferences;
     state.startTime = performance.now();
-    state.timeLimitMs = taskSet.enableTimeLimit ? (taskSet.durationSec || 0) * 1000 : 0;
+    state.timeLimitMs = state.taskSet.enableTimeLimit ? (state.taskSet.durationSec || 0) * 1000 : 0;
     state.timeLimitTriggered = false;
 
     dom.participantSetup.classList.add("hidden");
@@ -36,13 +40,14 @@ export function createTaskRunner(dom, { logDebug = () => {} } = {}) {
     dom.statusDot.classList.remove("timeup");
     dom.statusLabel.textContent = "実行中";
     dom.statusCount.textContent = `0 / ${state.queue.length}`;
+    dom.statusCountWrapper.classList.toggle("hidden", !state.taskSet.showQuestionCount);
 
-    const shouldShowTimer = taskSet.enableTimeLimit && taskSet.showTimer;
+    const shouldShowTimer = state.taskSet.enableTimeLimit && state.taskSet.showTimer;
     dom.timerPanel.classList.toggle("hidden", !shouldShowTimer);
     if (shouldShowTimer) {
       updateTimerDisplay();
     }
-    if (taskSet.enableTimeLimit) {
+    if (state.taskSet.enableTimeLimit) {
       startTimerLoop();
     } else {
       stopTimerLoop();
@@ -57,10 +62,12 @@ export function createTaskRunner(dom, { logDebug = () => {} } = {}) {
       const elapsed = performance.now() - state.startTime;
       if (!state.timeLimitTriggered && elapsed >= state.timeLimitMs) {
         state.timeLimitTriggered = true;
-        dom.statusDot.classList.add("timeup");
-        dom.statusLabel.textContent = "時間経過（この回答で終了）";
+        if (state.taskSet.showTimer) {
+          dom.statusDot.classList.add("timeup");
+          dom.statusLabel.textContent = "時間経過（この回答で終了）";
+        }
       }
-      if (state.taskSet?.showTimer) {
+      if (state.taskSet.showTimer) {
         updateTimerDisplay();
       }
     }, 100);

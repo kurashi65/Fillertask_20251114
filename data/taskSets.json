@@ -31,5 +31,49 @@
     "durationSec": 120,
     "showTimer": true,
     "notes": ""
+  },
+  {
+    "id": "task-mi5cnzeq-ekibls",
+    "name": "本番タスク1",
+    "sentenceSetId": "set-large-1",
+    "questionCount": null,
+    "randomize": true,
+    "enableTimeLimit": true,
+    "durationSec": 120,
+    "showTimer": false,
+    "notes": ""
+  },
+  {
+    "id": "task-mi5corsi-aib56t",
+    "name": "本番タスク2",
+    "sentenceSetId": "set-large-2",
+    "questionCount": null,
+    "randomize": true,
+    "enableTimeLimit": true,
+    "durationSec": 120,
+    "showTimer": false,
+    "notes": ""
+  },
+  {
+    "id": "task-mi5cp6zq-wcoom2",
+    "name": "本番タスク3",
+    "sentenceSetId": "set-large-3",
+    "questionCount": null,
+    "randomize": true,
+    "enableTimeLimit": true,
+    "durationSec": 120,
+    "showTimer": false,
+    "notes": ""
+  },
+  {
+    "id": "task-mi5cpiap-fsvcb1",
+    "name": "本番タスク4",
+    "sentenceSetId": "set-large-4",
+    "questionCount": null,
+    "randomize": true,
+    "enableTimeLimit": true,
+    "durationSec": 120,
+    "showTimer": false,
+    "notes": ""
   }
 ]

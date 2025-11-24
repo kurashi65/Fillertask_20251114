@@ -1,0 +1,35 @@
+[
+  {
+    "id": "task-demo",
+    "name": "デモタスク (120秒)",
+    "sentenceSetId": "set-basic",
+    "questionCount": 12,
+    "randomize": true,
+    "enableTimeLimit": true,
+    "durationSec": 120,
+    "showTimer": true,
+    "notes": "ウォームアップ用のサンプル設定"
+  },
+  {
+    "id": "task-mhynz96a-dt2r8g",
+    "name": "タスクセット2",
+    "sentenceSetId": "set-daily-1",
+    "questionCount": null,
+    "randomize": true,
+    "enableTimeLimit": true,
+    "durationSec": 120,
+    "showTimer": true,
+    "notes": ""
+  },
+  {
+    "id": "task-mhyoenin-u9fbz2",
+    "name": "大型タスクセット",
+    "sentenceSetId": "set-large-1",
+    "questionCount": null,
+    "randomize": true,
+    "enableTimeLimit": true,
+    "durationSec": 120,
+    "showTimer": true,
+    "notes": ""
+  }
+]

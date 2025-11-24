@@ -50,6 +50,7 @@ function cacheDom() {
     statusDot: document.getElementById("status-dot"),
     statusLabel: document.getElementById("status-label"),
     statusCount: document.getElementById("status-count"),
+    statusCountWrapper: document.getElementById("status-count-wrapper"),
     resultJson: document.getElementById("result-json"),
     participantReset: document.getElementById("participant-reset"),
     timerPanel: document.getElementById("timer-panel"),
@@ -69,6 +70,7 @@ function cacheDom() {
     tasksetEnableTimer: document.getElementById("taskset-enable-timer"),
     tasksetDuration: document.getElementById("taskset-duration"),
     tasksetShowTimer: document.getElementById("taskset-show-timer"),
+    tasksetShowQuestionCount: document.getElementById("taskset-show-question-count"),
     tasksetNotes: document.getElementById("taskset-notes"),
     tasksetSave: document.getElementById("taskset-save"),
     tasksetNew: document.getElementById("taskset-new"),
@@ -262,14 +264,19 @@ function renderParticipantSummary() {
   const datasetName = sentenceSet ? sentenceSet.name : "（参照先なし）";
   const sentenceCount = sentenceSet ? sentenceSet.sentences.length : 0;
   const questionCount = taskSet.questionCount || sentenceCount;
+  const shouldShowTimer = taskSet.showTimer !== false;
+  const showQuestionCount = taskSet.showQuestionCount === true;
   const limitText = taskSet.enableTimeLimit
-    ? `${taskSet.durationSec} 秒 / ${taskSet.showTimer ? "表示" : "非表示"}`
+    ? `${taskSet.durationSec} 秒 / ${shouldShowTimer ? "表示" : "非表示"}`
     : "制限なし";
   dom.participantTaskSummary.innerHTML = `
     <strong>${escapeHtml(taskSet.name)}</strong><br />
     文データセット：${escapeHtml(datasetName)}（${sentenceCount} 文）<br />
     出題数：${questionCount} 問（${taskSet.randomize ? "ランダム抽出" : "順番通り"}）<br />
-    制限時間：${limitText}${taskSet.notes ? `<br />メモ：${escapeHtml(taskSet.notes)}` : ""}`;
+    制限時間：${limitText}<br />
+    残り問題数表示：${showQuestionCount ? "あり" : "なし"}${
+      taskSet.notes ? `<br />メモ：${escapeHtml(taskSet.notes)}` : ""
+    }`;
 }
 
 function startParticipantTask() {
@@ -335,7 +342,8 @@ function renderTasksetSection() {
   dom.tasksetRandomize.checked = taskSet.randomize !== false;
   dom.tasksetEnableTimer.checked = taskSet.enableTimeLimit;
   dom.tasksetDuration.value = taskSet.durationSec ?? 120;
-  dom.tasksetShowTimer.checked = Boolean(taskSet.showTimer);
+  dom.tasksetShowTimer.checked = taskSet.showTimer !== false;
+  dom.tasksetShowQuestionCount.checked = taskSet.showQuestionCount === true;
   dom.tasksetNotes.value = taskSet.notes ?? "";
   handleTimerToggle();
   updateTasksetDatasetInfo();
@@ -350,6 +358,7 @@ function clearTasksetForm() {
   dom.tasksetEnableTimer.checked = true;
   dom.tasksetDuration.value = 120;
   dom.tasksetShowTimer.checked = true;
+  dom.tasksetShowQuestionCount.checked = false;
   dom.tasksetNotes.value = "";
   dom.tasksetDatasetInfo.textContent = "文データセットを作成してください";
 }
@@ -385,6 +394,7 @@ function saveTasksetForm() {
   taskSet.enableTimeLimit = enableTimeLimit;
   taskSet.durationSec = duration;
   taskSet.showTimer = enableTimeLimit ? dom.tasksetShowTimer.checked : false;
+  taskSet.showQuestionCount = dom.tasksetShowQuestionCount.checked;
   taskSet.notes = dom.tasksetNotes.value.trim();
   saveTaskSets();
   renderTasksetSection();
@@ -403,6 +413,7 @@ function createTaskSet() {
     enableTimeLimit: true,
     durationSec: 120,
     showTimer: true,
+    showQuestionCount: false,
     notes: "",
   };
   taskSets.push(newSet);
