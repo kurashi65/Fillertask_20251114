@@ -15,6 +15,8 @@ export const DEFAULT_PREFERENCES = {
   showDebug: false,
   activeSentenceSetId: null,
   activeTaskSetId: null,
+  displayMode: "pc",
+  lastResultJson: "",
 };
 
 const BASE_SENTENCES = [

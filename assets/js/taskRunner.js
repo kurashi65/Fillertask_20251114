@@ -1,6 +1,4 @@
-import { formatTime } from "./utils.js";
-
-export function createTaskRunner(dom, { logDebug = () => {} } = {}) {
+export function createTaskRunner(dom, { logDebug = () => {}, onTaskFinished = () => {} } = {}) {
   const state = {
     queue: [],
     index: -1,
@@ -37,16 +35,7 @@ export function createTaskRunner(dom, { logDebug = () => {} } = {}) {
     dom.participantSetup.classList.add("hidden");
     dom.participantFinished.classList.add("hidden");
     dom.participantRunning.classList.remove("hidden");
-    dom.statusDot.classList.remove("timeup");
-    dom.statusLabel.textContent = "実行中";
-    dom.statusCount.textContent = `0 / ${state.queue.length}`;
-    dom.statusCountWrapper.classList.toggle("hidden", !state.taskSet.showQuestionCount);
 
-    const shouldShowTimer = state.taskSet.enableTimeLimit && state.taskSet.showTimer;
-    dom.timerPanel.classList.toggle("hidden", !shouldShowTimer);
-    if (shouldShowTimer) {
-      updateTimerDisplay();
-    }
     if (state.taskSet.enableTimeLimit) {
       startTimerLoop();
     } else {
@@ -62,13 +51,8 @@ export function createTaskRunner(dom, { logDebug = () => {} } = {}) {
       const elapsed = performance.now() - state.startTime;
       if (!state.timeLimitTriggered && elapsed >= state.timeLimitMs) {
         state.timeLimitTriggered = true;
-        if (state.taskSet.showTimer) {
-          dom.statusDot.classList.add("timeup");
-          dom.statusLabel.textContent = "時間経過（この回答で終了）";
-        }
-      }
-      if (state.taskSet.showTimer) {
-        updateTimerDisplay();
+        logDebug("Time limit reached");
+        endTask();
       }
     }, 100);
   }
@@ -78,13 +62,6 @@ export function createTaskRunner(dom, { logDebug = () => {} } = {}) {
       clearInterval(state.timerId);
       state.timerId = null;
     }
-  }
-
-  function updateTimerDisplay() {
-    if (!state.taskSet?.enableTimeLimit) return;
-    const elapsed = performance.now() - state.startTime;
-    const remaining = Math.max(state.timeLimitMs - elapsed, 0);
-    dom.timerValue.textContent = formatTime(remaining / 1000);
   }
 
   function nextSentence() {
@@ -115,7 +92,6 @@ export function createTaskRunner(dom, { logDebug = () => {} } = {}) {
       timeLimitReached: state.timeLimitTriggered,
     };
     state.responses.push(response);
-    dom.statusCount.textContent = `${state.responses.length} / ${state.queue.length}`;
     logDebug("Response", response);
 
     if (state.timeLimitTriggered) {
@@ -132,7 +108,6 @@ export function createTaskRunner(dom, { logDebug = () => {} } = {}) {
     state.running = false;
     dom.participantRunning.classList.add("hidden");
     dom.participantFinished.classList.remove("hidden");
-    dom.statusLabel.textContent = "終了";
 
     const payload = {
       finishedAt: new Date().toISOString(),
@@ -148,7 +123,12 @@ export function createTaskRunner(dom, { logDebug = () => {} } = {}) {
         falseKey: state.preferences?.falseKey,
       },
     };
-    dom.resultJson.value = JSON.stringify(payload, null, 2);
+    const json = JSON.stringify(payload, null, 2);
+    try {
+      onTaskFinished(payload, json);
+    } catch (error) {
+      console.error("Failed to handle finished task payload", error);
+    }
   }
 
   function reset() {
@@ -157,12 +137,10 @@ export function createTaskRunner(dom, { logDebug = () => {} } = {}) {
     dom.participantFinished.classList.add("hidden");
     dom.participantRunning.classList.add("hidden");
     dom.participantSetup.classList.remove("hidden");
+    if (dom.participantReady) {
+      dom.participantReady.disabled = false;
+    }
     dom.sentenceText.textContent = "";
-    dom.resultJson.value = "";
-    dom.statusLabel.textContent = "待機中";
-    dom.statusCount.textContent = "0 / 0";
-    dom.statusDot.classList.remove("timeup");
-    dom.timerPanel.classList.add("hidden");
   }
 
   function handleKeyPress(key) {

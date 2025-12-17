@@ -5,13 +5,22 @@
 body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   margin: 0;
-  background: #f3f4f6;
+  background: #ffffff;
   color: #111827;
 }
 
+body.tablet-mode {
+  font-size: 1.05rem;
+}
+
+body.participant-mode {
+  background: #ffffff;
+  overflow: hidden;
+}
+
 header {
-  background: #111827;
-  color: #f9fafb;
+  background: #ffffff;
+  color: #111827;
   padding: 0.85rem 1.5rem;
   display: flex;
   justify-content: space-between;
@@ -34,7 +43,7 @@ header small {
   flex-wrap: wrap;
   gap: 0.5rem;
   padding: 0.75rem 1rem;
-  background: #e5e7eb;
+  background: #ffffff;
   border-bottom: 1px solid #d1d5db;
 }
 
@@ -57,6 +66,10 @@ main {
   max-width: 1080px;
   margin: 1.5rem auto;
   padding: 0 1rem 2rem;
+}
+
+body.participant-mode #experimenter-shell {
+  display: none;
 }
 
 .card {
@@ -120,6 +133,11 @@ textarea {
   gap: 0.3rem;
 }
 
+.tablet-mode .btn {
+  font-size: 1.05rem;
+  padding: 0.7rem 1.6rem;
+}
+
 .btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -158,40 +176,19 @@ textarea {
   font-size: 0.9rem;
 }
 
+.tablet-mode .key-pill {
+  font-size: 1rem;
+  padding: 0.45rem 1.25rem;
+}
+
 .subtext {
   font-size: 0.8rem;
   color: #6b7280;
   text-align: center;
 }
 
-.sentence-display {
-  font-size: 1.8rem;
-  text-align: center;
-  min-height: 3.5rem;
-  margin: 2rem 0 1.5rem;
-}
-
-.status-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.85rem;
-  color: #6b7280;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 1rem;
-}
-
-.status-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-  display: inline-block;
-  margin-right: 0.35rem;
-  background: #22c55e;
-}
-
-.status-dot.timeup {
-  background: #f97316;
+.tablet-mode #task-key-hints {
+  display: none;
 }
 
 .summary-box {
@@ -284,6 +281,121 @@ th {
   gap: 0.5rem;
   flex-wrap: wrap;
   margin: 0.5rem 0 1rem;
+}
+
+.participant-shell {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: #ffffff;
+  color: #111827;
+  padding: 1.5rem;
+  box-sizing: border-box;
+  z-index: 999;
+  overflow-y: auto;
+}
+
+.participant-shell.hidden {
+  display: none;
+}
+
+body.participant-mode .participant-shell {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.participant-frame {
+  width: min(900px, 100%);
+  border-radius: 1rem;
+  padding: 2rem;
+  background: #ffffff;
+  box-shadow: 0 15px 30px rgba(15, 23, 42, 0.12);
+}
+
+.participant-panel {
+  text-align: center;
+}
+
+.participant-panel.hidden {
+  display: none;
+}
+
+.participant-title {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.participant-lead {
+  margin-top: 0;
+  color: #374151;
+}
+
+.participant-guidelines {
+  text-align: left;
+  line-height: 1.8;
+  font-size: 1.05rem;
+  margin: 1.5rem 0;
+  padding-left: 1.4rem;
+}
+
+.participant-guidelines li {
+  margin-bottom: 0.65rem;
+}
+
+.participant-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 1.5rem;
+}
+
+.participant-start-btn {
+  font-size: 1.25rem;
+  padding: 0.9rem 2.4rem;
+}
+
+.participant-sentence {
+  font-size: 2.3rem;
+  font-weight: 600;
+  margin: 2rem 0 2.5rem;
+  min-height: 4.5rem;
+}
+
+.participant-response-btn {
+  min-width: 220px;
+  font-size: 1.2rem;
+  padding: 1rem 1.5rem;
+  border-width: 2px;
+}
+
+.participant-finish-message {
+  font-size: 1.2rem;
+  margin-top: 1.5rem;
+}
+
+.pc-key-hint {
+  color: #374151;
+}
+
+.tablet-mode .pc-key-hint {
+  display: none;
+}
+
+.tablet-mode .participant-sentence {
+  font-size: 2.9rem;
+}
+
+.tablet-mode .participant-response-btn {
+  min-width: 260px;
+  font-size: 1.4rem;
+  padding: 1.1rem 2.2rem;
+}
+
+.tablet-mode .participant-start-btn {
+  font-size: 1.4rem;
+  padding: 1rem 2.8rem;
 }
 
 .grid-2 {

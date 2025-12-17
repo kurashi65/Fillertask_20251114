@@ -18,6 +18,7 @@ let preferences = {};
 let dom = {};
 let taskRunner;
 let sentenceEditIndex = null;
+let pendingTaskContext = null;
 
 window.addEventListener("DOMContentLoaded", init);
 
@@ -36,6 +37,8 @@ async function init() {
 
 function cacheDom() {
   dom = {
+    experimenterShell: document.getElementById("experimenter-shell"),
+    participantShell: document.getElementById("participant-shell"),
     sections: document.querySelectorAll("main section"),
     tabButtons: document.querySelectorAll(".tab-button"),
     participantTaskSelect: document.getElementById("participant-task-select"),
@@ -44,22 +47,17 @@ function cacheDom() {
     participantSetup: document.getElementById("participant-setup"),
     participantRunning: document.getElementById("participant-running"),
     participantFinished: document.getElementById("participant-finished"),
+    participantReady: document.getElementById("participant-ready"),
     sentenceText: document.getElementById("sentence-text"),
     btnTrue: document.getElementById("btn-true"),
     btnFalse: document.getElementById("btn-false"),
-    statusDot: document.getElementById("status-dot"),
-    statusLabel: document.getElementById("status-label"),
-    statusCount: document.getElementById("status-count"),
-    statusCountWrapper: document.getElementById("status-count-wrapper"),
+    resultCard: document.getElementById("result-card"),
     resultJson: document.getElementById("result-json"),
-    participantReset: document.getElementById("participant-reset"),
-    timerPanel: document.getElementById("timer-panel"),
-    timerLabel: document.getElementById("timer-label"),
-    timerValue: document.getElementById("timer-value"),
+    displayModeSelect: document.getElementById("display-mode-select"),
     trueKeyPill: document.getElementById("true-key-pill"),
     falseKeyPill: document.getElementById("false-key-pill"),
-    taskTrueKeyLabel: document.getElementById("task-true-key-label"),
-    taskFalseKeyLabel: document.getElementById("task-false-key-label"),
+    participantTrueKeyBullet: document.getElementById("participant-key-true"),
+    participantFalseKeyBullet: document.getElementById("participant-key-false"),
     openTasksetTab: document.getElementById("open-taskset-tab"),
     tasksetSelector: document.getElementById("taskset-selector"),
     tasksetName: document.getElementById("taskset-name"),
@@ -108,7 +106,7 @@ function cacheDom() {
 }
 
 function setupTaskRunner() {
-  taskRunner = createTaskRunner(dom, { logDebug });
+  taskRunner = createTaskRunner(dom, { logDebug, onTaskFinished: handleTaskFinished });
 }
 
 function wireEvents() {
@@ -117,9 +115,9 @@ function wireEvents() {
   });
 
   dom.participantStart.addEventListener("click", startParticipantTask);
+  dom.participantReady.addEventListener("click", handleParticipantReady);
   dom.btnTrue.addEventListener("click", () => taskRunner.handleResponse(true));
   dom.btnFalse.addEventListener("click", () => taskRunner.handleResponse(false));
-  dom.participantReset.addEventListener("click", () => taskRunner.reset());
   dom.participantTaskSelect.addEventListener("change", () => {
     preferences.activeTaskSetId = dom.participantTaskSelect.value || null;
     savePreferences();
@@ -216,6 +214,7 @@ function wireEvents() {
   dom.tasksetReload.addEventListener("click", handleTasksetReload);
 
   dom.prefSave.addEventListener("click", savePreferencesFromForm);
+  dom.displayModeSelect.addEventListener("change", handleDisplayModeChange);
 }
 
 function renderAll() {
@@ -226,7 +225,10 @@ function renderAll() {
   renderParticipantSelectors();
   renderParticipantSummary();
   renderPreferencesSection();
+  renderDisplayModeSelector();
+  applyDisplayMode();
   updateKeyLabels();
+  renderLastResult();
 }
 
 function switchTab(tabId) {
@@ -251,7 +253,8 @@ function renderParticipantSelectors() {
   if (preferences.activeTaskSetId) {
     dom.participantTaskSelect.value = preferences.activeTaskSetId;
   }
-  dom.participantStart.disabled = taskSets.length === 0;
+  dom.participantStart.disabled =
+    taskSets.length === 0 || document.body.classList.contains("participant-mode");
 }
 
 function renderParticipantSummary() {
@@ -280,15 +283,34 @@ function renderParticipantSummary() {
 }
 
 function startParticipantTask() {
+  if (document.body.classList.contains("participant-mode")) {
+    return;
+  }
+  const context = buildParticipantContext();
+  if (!context) return;
+  pendingTaskContext = context;
+  document.body.classList.add("participant-mode");
+  dom.participantShell.classList.remove("hidden");
+  dom.participantSetup.classList.remove("hidden");
+  dom.participantRunning.classList.add("hidden");
+  dom.participantFinished.classList.add("hidden");
+  if (dom.participantReady) {
+    dom.participantReady.disabled = false;
+  }
+  dom.participantStart.disabled = true;
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function buildParticipantContext() {
   const taskSet = getActiveTaskSet();
   const sentenceSet = taskSet ? sentenceSets.find((set) => set.id === taskSet.sentenceSetId) : null;
   if (!taskSet || !sentenceSet) {
     alert("有効なタスクセットを選択してください。");
-    return;
+    return null;
   }
   if (!sentenceSet.sentences.length) {
     alert("文データセットが空です。");
-    return;
+    return null;
   }
 
   const pool = clone(sentenceSet.sentences);
@@ -301,19 +323,34 @@ function startParticipantTask() {
   const stimuli = pool.slice(0, limit);
   if (!stimuli.length) {
     alert("出題する文がありません。");
-    return;
+    return null;
   }
 
+  return {
+    taskSet,
+    sentenceSet,
+    stimuli,
+    preferences: { ...preferences },
+  };
+}
+
+function handleParticipantReady() {
+  if (!pendingTaskContext) {
+    alert("実験者が準備していません。");
+    return;
+  }
+  if (dom.participantReady) {
+    dom.participantReady.disabled = true;
+  }
   try {
-    taskRunner.start({
-      taskSet,
-      sentenceSet,
-      stimuli,
-      preferences: { ...preferences },
-    });
+    taskRunner.start(pendingTaskContext);
+    pendingTaskContext = null;
   } catch (error) {
     console.error(error);
-    alert("タスクを開始できませんでした。コンソールを確認してください。");
+    alert("タスクを開始できませんでした。実験者を呼んでください。");
+    if (dom.participantReady) {
+      dom.participantReady.disabled = false;
+    }
   }
 }
 
@@ -834,13 +871,52 @@ function savePreferencesFromForm() {
   alert("操作設定を保存しました。");
 }
 
+function renderDisplayModeSelector() {
+  if (!dom.displayModeSelect) return;
+  dom.displayModeSelect.value = preferences.displayMode || "pc";
+}
+
+function applyDisplayMode() {
+  const tablet = isTabletMode();
+  document.body.classList.toggle("tablet-mode", tablet);
+}
+
+function handleDisplayModeChange() {
+  if (!dom.displayModeSelect) return;
+  const mode = dom.displayModeSelect.value === "tablet" ? "tablet" : "pc";
+  preferences.displayMode = mode;
+  savePreferences();
+  applyDisplayMode();
+  updateKeyLabels();
+}
+
+function isTabletMode() {
+  return (preferences.displayMode || "pc") === "tablet";
+}
+
+function renderLastResult() {
+  if (!dom.resultCard || !dom.resultJson) return;
+  const hasResult = Boolean(preferences.lastResultJson);
+  dom.resultCard.classList.toggle("hidden", !hasResult);
+  dom.resultJson.value = preferences.lastResultJson || "";
+}
+
 function updateKeyLabels() {
   const trueKey = (preferences.trueKey || "f").toUpperCase();
   const falseKey = (preferences.falseKey || "j").toUpperCase();
-  dom.trueKeyPill.textContent = `本当だと思う：${trueKey} キー`;
-  dom.falseKeyPill.textContent = `うそだと思う：${falseKey} キー`;
-  dom.taskTrueKeyLabel.textContent = `${trueKey} = 本当`;
-  dom.taskFalseKeyLabel.textContent = `${falseKey} = うそ`;
+  const isTablet = isTabletMode();
+  if (dom.trueKeyPill) {
+    dom.trueKeyPill.textContent = isTablet ? "本当だと思う" : `本当だと思う：${trueKey} キー`;
+  }
+  if (dom.falseKeyPill) {
+    dom.falseKeyPill.textContent = isTablet ? "うそだと思う" : `うそだと思う：${falseKey} キー`;
+  }
+  if (dom.participantTrueKeyBullet) {
+    dom.participantTrueKeyBullet.textContent = trueKey;
+  }
+  if (dom.participantFalseKeyBullet) {
+    dom.participantFalseKeyBullet.textContent = falseKey;
+  }
 }
 
 function populateSelect(selectEl, list, allowEmpty) {
@@ -858,6 +934,12 @@ function populateSelect(selectEl, list, allowEmpty) {
     option.textContent = item.name;
     selectEl.appendChild(option);
   });
+}
+
+function handleTaskFinished(_payload, jsonString) {
+  preferences.lastResultJson = jsonString;
+  savePreferences();
+  renderLastResult();
 }
 
 function logDebug(...args) {

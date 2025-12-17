@@ -6,35 +6,46 @@
     <link rel="stylesheet" href="assets/css/style.css" />
   </head>
   <body>
-    <header>
-      <h1>日本語 真偽判定タスク管理</h1>
-      <small>文データセットとタスクセットをブラウザ内で整理できます</small>
-    </header>
+    <div id="experimenter-shell">
+      <header>
+        <h1>日本語 真偽判定タスク管理</h1>
+        <small>文データセットとタスクセットをブラウザ内で整理できます</small>
+      </header>
 
-    <div class="tabs">
-      <button class="tab-button active" data-tab="run-tab">🧪 参加者タスク</button>
-      <button class="tab-button" data-tab="taskset-tab">🗂️ タスクセット</button>
-      <button class="tab-button" data-tab="dataset-tab">📚 文データセット</button>
-      <button class="tab-button" data-tab="prefs-tab">⚙️ 操作設定</button>
-    </div>
+      <div class="tabs">
+        <button class="tab-button active" data-tab="run-tab">🧪 参加者タスク</button>
+        <button class="tab-button" data-tab="taskset-tab">🗂️ タスクセット</button>
+        <button class="tab-button" data-tab="dataset-tab">📚 文データセット</button>
+        <button class="tab-button" data-tab="prefs-tab">⚙️ 操作設定</button>
+      </div>
 
-    <main>
-      <section id="run-tab" class="card">
-        <h2 class="section-title">参加者用タスク実行</h2>
-        <div id="participant-setup">
+      <main>
+        <section id="run-tab" class="card">
+          <h2 class="section-title">実験者用：参加者タスクの準備</h2>
           <p>
             ここでは，事前に用意した <strong>タスクセット</strong> を選び，
-            参加者に提示する文と制限時間をまとめて実行できます。
+            参加者に提示する文と制限時間をまとめて実行できます。「タスクを開始」を押すと
+            実験者用 UI が隠れ，参加者向けの指示画面が表示されます。
           </p>
           <div class="grid-2">
             <div>
               <label for="participant-task-select">タスクセット</label>
               <select id="participant-task-select"></select>
+              <div class="inline-actions" style="margin-top: 0.5rem;">
+                <button id="open-taskset-tab" class="btn btn-text" type="button">
+                  タスクセットを編集する
+                </button>
+              </div>
             </div>
-            <div class="inline-actions">
-              <button id="open-taskset-tab" class="btn btn-text" type="button">
-                タスクセットを編集する
-              </button>
+            <div>
+              <label for="display-mode-select">表示モード</label>
+              <select id="display-mode-select">
+                <option value="pc">PC 用 UI</option>
+                <option value="tablet">タブレット用 UI</option>
+              </select>
+              <p class="small-muted">
+                タブレットモードではボタンや文字を大きくし，F/J キーなどの案内を非表示にします。
+              </p>
             </div>
           </div>
           <div id="participant-task-summary" class="summary-box small-muted">
@@ -44,49 +55,23 @@
             <div class="key-pill" id="true-key-pill">本当だと思う：F キー</div>
             <div class="key-pill" id="false-key-pill">うそだと思う：J キー</div>
           </div>
-          <p class="subtext">
+          <p class="subtext" id="task-key-hints">
             キーボードが使いづらい場合は，画面下部のボタンでも回答できます。
           </p>
           <div class="center" style="text-align: center; margin-top: 1rem;">
             <button id="participant-start" class="btn btn-primary">タスクを開始</button>
+            <p class="small-muted" style="margin-top: 0.5rem;">
+              ボタンを押すと参加者向けの注意事項画面に切り替わります。
+            </p>
           </div>
-        </div>
-
-        <div id="participant-running" class="hidden">
-          <div id="timer-panel" class="timer-panel hidden">
-            <span id="timer-label">残り時間</span>
-            <span id="timer-value">00:00</span>
+          <div id="result-card" class="summary-box mt-3 hidden">
+            <h3 class="section-title" style="margin-top: 0;">直近の結果ログ</h3>
+            <p class="small-muted" style="margin-bottom: 0.4rem;">
+              参加者の画面には表示されません。必要に応じてコピーしてください。
+            </p>
+            <textarea id="result-json" readonly spellcheck="false"></textarea>
           </div>
-          <div class="sentence-display" id="sentence-text"></div>
-          <div class="keys-row">
-            <button id="btn-true" class="btn btn-outline">本当だと思う</button>
-            <button id="btn-false" class="btn btn-outline">うそだと思う</button>
-          </div>
-          <p class="subtext">
-            キーボード：<span id="task-true-key-label">F = 本当</span> ／
-            <span id="task-false-key-label">J = うそ</span>
-          </p>
-          <div class="status-row">
-            <span>
-              <span id="status-dot" class="status-dot"></span>
-              状態：<span id="status-label">待機中</span>
-            </span>
-            <span id="status-count-wrapper">回答数：<span id="status-count">0 / 0</span></span>
-          </div>
-        </div>
-
-        <div id="participant-finished" class="hidden">
-          <h3 class="section-title">終了しました</h3>
-          <p>
-            真偽判定タスクが完了しました。以下の JSON ログをコピーして保存してください。
-          </p>
-          <label for="result-json">JSON ログ</label>
-          <textarea id="result-json" readonly spellcheck="false"></textarea>
-          <div class="center" style="text-align: center; margin-top: 1rem;">
-            <button id="participant-reset" class="btn btn-outline">準備画面に戻る</button>
-          </div>
-        </div>
-      </section>
+        </section>
 
       <section id="taskset-tab" class="card hidden">
         <h2 class="section-title">タスクセット管理</h2>
@@ -292,7 +277,42 @@
           <button class="btn btn-primary" id="pref-save" type="button">設定を保存</button>
         </div>
       </section>
-    </main>
+      </main>
+    </div>
+
+    <div id="participant-shell" class="participant-shell hidden">
+      <div class="participant-frame">
+        <div id="participant-setup" class="participant-panel">
+          <h2 class="participant-title">真偽判定タスク</h2>
+          <p class="participant-lead">以下の注意事項を読んでからスタートしてください。</p>
+          <ul class="participant-guidelines">
+            <li>表示された文を読み，本当だと思ったら左のボタン，うそだと思ったら右のボタンを押してください。</li>
+            <li class="pc-key-hint">
+              PC では <span id="participant-key-true">F</span> キー = 本当，
+              <span id="participant-key-false">J</span> キー = うそ でも回答できます。
+            </li>
+            <li>迷った場合は直感で回答し，すぐ次の文に進んでください。</li>
+            <li>終了と表示されるまでこの画面の前に座ったままにしてください。</li>
+          </ul>
+          <div class="participant-actions">
+            <button id="participant-ready" class="btn btn-primary participant-start-btn">スタート</button>
+          </div>
+        </div>
+
+        <div id="participant-running" class="participant-panel hidden">
+          <div class="participant-sentence" id="sentence-text"></div>
+          <div class="participant-actions">
+            <button id="btn-true" class="btn btn-outline participant-response-btn">本当だと思う</button>
+            <button id="btn-false" class="btn btn-outline participant-response-btn">うそだと思う</button>
+          </div>
+        </div>
+
+        <div id="participant-finished" class="participant-panel hidden">
+          <h2 class="participant-title">終了しました</h2>
+          <p class="participant-finish-message">実験者に返却してください。</p>
+        </div>
+      </div>
+    </div>
 
     <script type="module" src="assets/js/main.js"></script>
   </body>
